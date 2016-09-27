@@ -6,6 +6,7 @@ class App < Sinatra::Base
   set :root, File.expand_path("../..", __FILE__)
 
   configure :development do
+    require 'pry'
     register Sinatra::Reloader
   end
 
