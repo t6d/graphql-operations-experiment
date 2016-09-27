@@ -16,6 +16,7 @@ PLATFORMS
 
 DEPENDENCIES
   graphql
+  rack
   sinatra
 
 BUNDLED WITH
