@@ -11,6 +11,8 @@ GEM
       method_source (~> 0.8.1)
       slop (~> 3.4)
     rack (1.6.4)
+    rack-parser (0.7.0)
+      rack
     rack-protection (1.5.3)
       rack
     rack-test (0.6.3)
@@ -36,6 +38,7 @@ DEPENDENCIES
   graphql
   pry
   rack
+  rack-parser
   sinatra
   sinatra-contrib
 

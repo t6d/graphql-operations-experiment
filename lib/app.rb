@@ -1,5 +1,6 @@
 require 'sinatra/base'
 require 'sinatra/reloader'
+require 'rack/parser'
 
 class App < Sinatra::Base
   enable :static
@@ -9,6 +10,10 @@ class App < Sinatra::Base
     require 'pry'
     register Sinatra::Reloader
   end
+
+  use Rack::Parser, content_types: {
+    'application/json'  => Proc.new { |body| ::MultiJson.decode body }
+  }
 
   get "/" do
     erb :index
