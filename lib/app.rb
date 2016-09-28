@@ -6,33 +6,84 @@ require 'graphql'
 require 'smart_properties'
 require 'active_operation'
 
+##
+# Models
+##
+
 class Notebook
   include SmartProperties
 
   property :id
   property :title
 
-  def to_json
+  @notebooks = []
+
+  def self.find(id)
+    @notebooks.find { |notebook| notebook.id.to_s == id.to_s }
+  end
+
+  def self.create(**attrs)
+    new(id: @notebooks.length + 1, **attrs).tap do |new_notebook|
+      @notebooks << new_notebook
+    end
+  end
+
+  def to_h
     {
       id: id,
       title: title
-    }.to_json
+    }
+  end
+
+  def to_json
+    to_h.to_json
   end
 end
 
-class GraphQLOperation < ActiveOperation::Base
+##
+# Operation supertypes
+##
+
+class Operation < ActiveOperation::Base
+  def self.option(name, **config)
+    input(name, type: :keyword, **config)
+  end
+end
+
+class QueryOperation < Operation
+  option :object
+  option :context
+
   def self.call(object, arguments, context)
-    super(object: object, arguments: arguments, context: context)
+    super(object: object, context: context, **arguments.to_h.map { |k,v| [k.to_sym, v] }.to_h)
   end
 end
 
-class Notebook::Find < GraphQLOperation
-  input :object, type: :keyword
-  input :arguments, type: :keyword
-  input :context, type: :keyword
+class MutationOperation < Operation
+  option :context
+
+  def self.call(inputs, context)
+    super(context: context, **inputs.to_h.map { |k,v| [k.to_sym, v] }.to_h)
+  end
+end
+
+##
+# Business processes
+##
+
+class Notebook::Find < QueryOperation
+  option :id
 
   def execute
-    Notebook.new(id: arguments[:id], title: "Some randome title")
+    Notebook.find(id)
+  end
+end
+
+class Notebook::Create < MutationOperation
+  option :title
+
+  def execute
+    Notebook.create(title: title)
   end
 end
 
@@ -59,7 +110,25 @@ QueryType = GraphQL::ObjectType.define do
   end
 end
 
-Schema = GraphQL::Schema.define(query: QueryType)
+CreateNotebookMutation = GraphQL::Relay::Mutation.define do
+  name "CreateNotebook"
+  input_field :title, !types.String
+  return_field :id, types.ID
+  return_field :title, types.String
+  resolve Notebook::Create
+end
+
+MutationType = GraphQL::ObjectType.define do
+  name "Mutation"
+  description "The mutation root for this schema"
+
+  field :createNotebook, CreateNotebookMutation.field
+end
+
+Schema = GraphQL::Schema.define do
+  query QueryType
+  mutation MutationType
+end
 
 ##
 # Application
