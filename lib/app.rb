@@ -45,14 +45,11 @@ end
 ##
 
 class Operation < ActiveOperation::Base
-  def self.option(name, **config)
-    input(name, type: :keyword, **config)
-  end
 end
 
 class QueryOperation < Operation
-  option :object
-  option :context
+  property :object
+  property :context
 
   def self.call(object, arguments, context)
     super(object: object, context: context, **arguments.to_h.map { |k,v| [k.to_sym, v] }.to_h)
@@ -60,7 +57,7 @@ class QueryOperation < Operation
 end
 
 class MutationOperation < Operation
-  option :context
+  property :context
 
   def self.call(inputs, context)
     super(context: context, **inputs.to_h.map { |k,v| [k.to_sym, v] }.to_h)
@@ -72,7 +69,7 @@ end
 ##
 
 class Notebook::Find < QueryOperation
-  option :id
+  property :id
 
   def execute
     Notebook.find(id)
@@ -80,7 +77,7 @@ class Notebook::Find < QueryOperation
 end
 
 class Notebook::Create < MutationOperation
-  option :title
+  property :title
 
   def execute
     Notebook.create(title: title)
